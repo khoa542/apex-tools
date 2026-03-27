@@ -2,14 +2,10 @@ import streamlit as st
 import math
 import random
 import string
-import time
-from sympy import symbols, diff, integrate, solve, simplify, isprime, ntheory, limit, expand, factor, oo, gcd, lcm
+from sympy import symbols, simplify, isprime, ntheory, gcd, lcm
 
 # --- CONFIG STREAMLIT ---
 st.set_page_config(layout="wide", page_title="ApexTools Pro")
-
-# --- SYMBOLIC ENGINE ---
-x, y, z = symbols('x y z')
 
 class ApexTools:
     def __init__(self):
@@ -22,11 +18,8 @@ class ApexTools:
         self.menu_options = [
             'Home', '--- SYSTEM ---', 'Tutorial', 'System Health',
             '--- MATH CORE ---', 'Pro Calculator', 'GCD & LCM', 'Linear Solver',
-            'Quadratic Solver', 'Expand Expression', 'Factorize Polynomial',
             '--- NUMBER THEORY ---', 'Check Square Number', 'Check Prime Number',
-            'Prime Factorization', 'Find All Divisors', '--- CALCULUS ---',
-            'Derivative (df/dx)', 'Integral (∫dx)', 'Limits (x -> c)',
-            '--- CONVERTERS ---', 'Length', 'Mass', 'Time', 'Power', 'Force', 'Voltage', 'Temperature',
+            'Prime Factorization', 'Find All Divisors',
             '--- RANDOM TOOLS ---', 'Secure Password Gen', 'Random Color HEX',
             'Dice Roller (d6/d20)', 'Random List Picker', 'Integer RNG (Min/Max)'
         ]
@@ -46,7 +39,7 @@ class ApexTools:
             .apex-header {{ 
                 background: {"linear-gradient(90deg, #003300, #000)" if is_matrix else "linear-gradient(90deg, #000040, #000080)"}; 
                 color: #fff; padding: 10px; font-weight: bold; border: 2px inset #fff; 
-                display: flex; justify-content: space-between; font-family: 'Segoe UI', sans-serif;
+                display: flex; justify-content: space-between;
             }}
             .res-box {{ 
                 background: {"#000" if is_matrix else "#fdfdfd"}; 
@@ -66,7 +59,7 @@ class ApexTools:
 
     def render_header(self):
         st.markdown('<div class="apex-header"><span>ApexTools Pro</span><span>CORE: ONLINE</span></div>', unsafe_allow_html=True)
-        st.markdown('<marquee class="marquee-bar">System ready | Use "hack" to switch modes | All tools operational... </marquee>', unsafe_allow_html=True)
+        st.markdown('<marquee class="marquee-bar">Random Engine: READY | Expressions supported | Invisible secrets active... </marquee>', unsafe_allow_html=True)
 
     def show_res(self, text):
         st.markdown(f'<div class="res-box"><b>Console_Output:></b><br>{text}</div>', unsafe_allow_html=True)
@@ -79,9 +72,6 @@ class ApexTools:
             return True
         elif low_v == "coffee":
             self.show_res("☕ System energy at 100%.")
-            return True
-        elif low_v == "xyzzy":
-            st.balloons()
             return True
         return False
 
@@ -96,13 +86,64 @@ class ApexTools:
                     st.balloons()
                     self.show_res("🎁 <b>ACCESS GRANTED:</b> System Core Unlocked.")
                 else: st.toast(f"Probe: {st.session_state['click_count']}/5")
-        st.info("Select a tool from the sidebar. Mathematical expressions are supported in core modules.")
+        st.info("Select a tool from the sidebar to begin.")
 
-    def ui_generic(self, name, label, placeholder, callback):
+    # --- ROUTER ---
+    def router(self, v):
+        if v.startswith('---'): return
+        if v == 'Home': self.ui_home()
+        elif v == 'Pro Calculator': self.ui_math_tool("Calculator", "Enter expression:", "2^50 + 1", self.logic_calc)
+        elif v == 'Check Prime Number': self.ui_math_tool("Prime Check", "Enter number:", "97", self.logic_prime)
+        elif v == 'Check Square Number': self.ui_math_tool("Square Check", "Enter number:", "1024", self.logic_square)
+        
+        # RANDOM TOOLS
+        elif v == 'Secure Password Gen': self.ui_random_tool("Password Generator", "Enter length:", "12", self.logic_pass)
+        elif v == 'Random Color HEX': self.ui_color_tool()
+        elif v == 'Dice Roller (d6/d20)': self.ui_dice_tool()
+        elif v == 'Random List Picker': self.ui_random_tool("List Picker", "Enter items (comma separated):", "Apple, Orange, Banana", self.logic_picker)
+        elif v == 'Integer RNG (Min/Max)': self.ui_rng_tool()
+        
+        elif v == 'System Health': self.ui_health()
+        else: st.info(f"The module '{v}' is under maintenance or coming soon.")
+
+    # --- UI WRAPPERS ---
+    def ui_math_tool(self, name, label, placeholder, callback):
         st.subheader(name)
         inp = st.text_input(label, placeholder=placeholder, key=f"inp_{name}")
         if st.button(f"Compute {name}", key=f"btn_{name}"):
             callback(inp)
+
+    def ui_random_tool(self, name, label, placeholder, callback):
+        st.subheader(name)
+        inp = st.text_input(label, placeholder=placeholder, key=f"inp_{name}")
+        if st.button(f"Generate", key=f"btn_{name}"):
+            callback(inp)
+
+    def ui_color_tool(self):
+        st.subheader("Random Color HEX")
+        st.write("Click below to generate a random web color code.")
+        if st.button("Generate Color"):
+            color = "#%06x" % random.randint(0, 0xFFFFFF)
+            self.show_res(f"Generated HEX: <span style='color:{color}; font-weight:bold;'>{color}</span>")
+
+    def ui_dice_tool(self):
+        st.subheader("Dice Roller")
+        dice_type = st.selectbox("Select Dice Type:", ["d6 (Standard)", "d20 (D20 System)"])
+        if st.button("Roll Dice"):
+            res = random.randint(1, 6) if "d6" in dice_type else random.randint(1, 20)
+            self.show_res(f"Dice Result ({dice_type.split()[0]}): 🎲 **{res}**")
+
+    def ui_rng_tool(self):
+        st.subheader("Integer RNG")
+        c1, c2 = st.columns(2)
+        with c1: min_v = st.number_input("Minimum:", value=1)
+        with c2: max_v = st.number_input("Maximum:", value=100)
+        if st.button("Generate Random Number"):
+            if min_v <= max_v:
+                res = random.randint(int(min_v), int(max_v))
+                self.show_res(f"RNG Result: **{res}** (Range: {min_v}-{max_v})")
+            else:
+                self.show_res("Error: Minimum cannot be greater than Maximum.")
 
     # --- LOGIC ---
     def logic_calc(self, v):
@@ -118,12 +159,6 @@ class ApexTools:
             self.show_res(f"Is Prime: {isprime(n)}")
         except: self.show_res("Input error.")
 
-    def logic_picker(self, v):
-        try:
-            items = [i.strip() for i in v.split(',') if i.strip()]
-            self.show_res(f"Picked: {random.choice(items)}")
-        except: self.show_res("Please enter a comma-separated list.")
-
     def logic_square(self, v):
         try:
             n = int(simplify(v.replace('^','**')))
@@ -131,31 +166,24 @@ class ApexTools:
             self.show_res(f"Value: {n}<br>Perfect Square: {res}")
         except: self.show_res("Input error.")
 
-    def router(self, v):
-        if v.startswith('---'): return
-        if v == 'Home': self.ui_home()
-        elif v == 'Pro Calculator': self.ui_generic("Calculator", "Enter expression:", "2^50 + 1", self.logic_calc)
-        elif v == 'Check Prime Number': self.ui_generic("Prime Check", "Enter number:", "97", self.logic_prime)
-        elif v == 'Check Square Number': self.ui_generic("Square Check", "Enter number:", "1024", self.logic_square)
-        elif v == 'Random List Picker': self.ui_generic("List Picker", "Enter items (comma separated):", "Apple, Orange, Banana", self.logic_picker)
-        elif v == 'System Health': self.ui_health()
-        elif v == 'GCD & LCM': self.ui_gcd_lcm()
-        else:
-            # Fallback cho các công cụ chưa viết logic riêng
-            self.ui_generic(v, "Enter input:", "...", self.logic_calc)
+    def logic_pass(self, v):
+        try:
+            length = int(v)
+            chars = string.ascii_letters + string.digits + "!@#$%^&*"
+            res = "".join(random.choice(chars) for _ in range(length))
+            self.show_res(f"Secure Password: <code style='color:blue;'>{res}</code>")
+        except: self.show_res("Error: Please enter a valid number for length.")
 
-    def ui_gcd_lcm(self):
-        st.subheader("GCD & LCM")
-        n1 = st.number_input("Number 1", value=1)
-        n2 = st.number_input("Number 2", value=1)
-        if st.button("Compute GCD & LCM"):
-            from sympy import gcd, lcm
-            self.show_res(f"GCD: {gcd(int(n1), int(n2))}<br>LCM: {lcm(int(n1), int(n2))}")
+    def logic_picker(self, v):
+        if not v.strip(): self.show_res("Error: List is empty."); return
+        items = [i.strip() for i in v.split(',') if i.strip()]
+        res = random.choice(items)
+        self.show_res(f"Items processed: {len(items)}<br>Picked Choice: 🎯 **{res}**")
 
     def ui_health(self):
         st.subheader("System Health")
-        st.write("Engine: SymPy Symbolic")
-        st.write("Status: Operational")
+        st.write("Core Status: Stable")
+        if st.session_state['matrix_mode']: st.success("Matrix Override: ACTIVE")
 
 # Launch
 ApexTools()
