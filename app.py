@@ -12,7 +12,6 @@ x, y, z = symbols('x y z')
 
 class ApexTools:
     def __init__(self):
-        # State quản lý Easter Eggs và đếm click
         if 'click_count' not in st.session_state: st.session_state['click_count'] = 0
 
         self.apply_styles()
@@ -40,7 +39,7 @@ class ApexTools:
             .apex-header { 
                 background: linear-gradient(90deg, #000040, #000080); 
                 color: #fff; padding: 10px; font-weight: bold; border: 2px inset #fff; 
-                display: flex; justify-content: space-between; font-family: 'Segoe UI', sans-serif;
+                display: flex; justify-content: space-between; 
             }
             .res-box { 
                 background: #fdfdfd; border: 2px inset #808080; padding: 15px; 
@@ -48,12 +47,11 @@ class ApexTools:
                 font-size: 18px; margin-top: 20px; 
             }
             .marquee-bar { background: #000; color: #0f0; font-family: 'Courier New'; font-size: 13px; border: 1px solid #fff; padding: 3px; }
-            .update-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
-            .update-table th, .update-table td { border: 1px solid #808080; padding: 12px; text-align: left; }
-            .update-table th { background-color: #000080; color: #fff; }
-            .update-table tr:nth-child(even) { background-color: #f2f2f2; }
+            .update-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .update-table th, .update-table td { border: 1px solid #808080; padding: 10px; text-align: left; font-size: 14px; }
+            .update-table th { background-color: #e0e0e0; color: #000; }
             
-            /* Hidden Secret Button */
+            /* Nút Secret tàng hình */
             .stButton>button[kind="secondary"] {
                 background: transparent !important; color: transparent !important; border: none !important;
                 width: 10px !important; height: 10px !important; padding: 0 !important;
@@ -65,7 +63,7 @@ class ApexTools:
 
     def render_header(self):
         st.markdown('<div class="apex-header"><span>ApexTools Pro</span><span>CORE: ONLINE</span></div>', unsafe_allow_html=True)
-        st.markdown('<marquee class="marquee-bar">System Ready | Engine: SymPy Symbolic | Expression support active | All modules operational... </marquee>', unsafe_allow_html=True)
+        st.markdown('<marquee class="marquee-bar">System Ready | Use "^" for exponents | Secret button hidden | Update Log updated... </marquee>', unsafe_allow_html=True)
 
     def show_res(self, text):
         st.markdown(f'<div class="res-box"><b>ApexTools Log:</b><br>{text}</div>', unsafe_allow_html=True)
@@ -73,114 +71,171 @@ class ApexTools:
     def clean_input(self, text):
         return str(text).replace('^', '**')
 
+    def ui_generic(self, name, label, placeholder, callback):
+        st.subheader(name)
+        inp = st.text_input(label, placeholder=placeholder, key=f"inp_{name}")
+        if st.button(f"Compute {name}", key=f"btn_{name}"):
+            callback(inp)
+
+    # --- ROUTER ---
+    def router(self, v):
+        if v.startswith('---'): return
+        
+        if v == 'Home': self.ui_home()
+        elif v == 'Update Log': self.ui_update_log()
+        elif v == 'Tutorial': self.ui_tutorial()
+        elif v == 'System Health': self.ui_health()
+        
+        # MATH CORE
+        elif v == 'Pro Calculator': self.ui_generic("Calculator", "Expression:", "2^50 + 1", self.logic_calc)
+        elif v == 'GCD & LCM': self.ui_gcd_lcm()
+        elif v == 'Linear Solver': self.ui_generic("Linear Solver", "Equation (f(x)=0):", "2*x - 10", self.logic_solve)
+        elif v == 'Quadratic Solver': self.ui_generic("Quadratic Solver", "Equation:", "x^2 - 5*x + 6", self.logic_solve)
+        elif v == 'Expand Expression': self.ui_generic("Expand", "Input:", "(x+1)^3", self.logic_expand)
+        elif v == 'Factorize Polynomial': self.ui_generic("Factorize", "Input:", "x^2 - 1", self.logic_factor)
+        
+        # NUMBER THEORY
+        elif v == 'Check Square Number': self.ui_generic("Square Check", "Number/Expr:", "2^10", self.logic_square)
+        elif v == 'Check Prime Number': self.ui_generic("Prime Check", "Number/Expr:", "97", self.logic_prime)
+        elif v == 'Prime Factorization': self.ui_generic("Prime Factorization", "Value:", "120", self.logic_p_factors)
+        elif v == 'Find All Divisors': self.ui_generic("Divisor Finder", "Value:", "100", self.logic_divisors)
+        
+        # CALCULUS
+        elif v == 'Derivative (df/dx)': self.ui_generic("Derivative", "f(x):", "x^3", self.logic_der)
+        elif v == 'Integral (∫dx)': self.ui_generic("Integral", "f(x):", "sin(x)", self.logic_int)
+        elif v == 'Limits (x -> c)': self.ui_limit_ui()
+
+        # RANDOM TOOLS
+        elif v == 'Random List Picker': self.ui_generic("List Picker", "Items (comma separated):", "A, B, C", self.logic_picker)
+        elif v == 'Secure Password Gen': self.ui_generic("Password Gen", "Length:", "12", self.logic_pass)
+        elif v == 'Random Color HEX': self.ui_color_tool()
+        elif v == 'Dice Roller (d6/d20)': self.ui_dice_tool()
+        elif v == 'Integer RNG (Min/Max)': self.ui_rng_tool()
+
+    # --- UI & LOGIC MODULES ---
     def ui_home(self):
         st.title("🏠 Home")
         c1, c2 = st.columns([0.23, 0.77])
-        with c1:
-            st.write("Welcome back, Commander.")
+        with c1: st.write("Welcome back, Commander.")
         with c2:
-            # Secret Hidden Button
             if st.button(" ", key="hidden_secret_btn"):
                 st.session_state['click_count'] += 1
                 if st.session_state['click_count'] >= 5:
                     st.balloons()
-                    self.show_res("🎁 <b>ACCESS GRANTED:</b> System Core Unlocked.<br>Status: LEGENDARY USER.")
-                else:
-                    st.toast(f"Security probe detected... ({st.session_state['click_count']}/5)")
-        st.info("ApexTools is a comprehensive symbolic computation engine. Use the sidebar to navigate between tools.")
+                    self.show_res("🎁 <b>ACCESS GRANTED:</b> System Core Unlocked.")
+                else: st.toast(f"Probe: {st.session_state['click_count']}/5")
+        st.info("Select a module from the sidebar to begin.")
 
     def ui_update_log(self):
-        st.subheader("📜 System Update Log")
+        st.subheader("📜 Update Log")
         st.markdown("""
         <table class="update-table">
-            <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Enhancement Details</th>
-            </tr>
-            <tr>
-                <td>2026-03-28</td>
-                <td><b>Engine</b></td>
-                <td>Updated SymPy integration to support complex nested expressions (e.g., 2^50+1) in Number Theory modules.</td>
-            </tr>
-            <tr>
-                <td>2026-03-25</td>
-                <td><b>UI/UX</b></td>
-                <td>Reverted to classic 'Retro Windows' grayscale interface for better readability and performance.</td>
-            </tr>
-            <tr>
-                <td>2026-03-20</td>
-                <td><b>Math Core</b></td>
-                <td>Refined Calculus engine. Derivatives and Integrals now support multi-variable simplification.</td>
-            </tr>
-            <tr>
-                <td>2026-03-15</td>
-                <td><b>Security</b></td>
-                <td>Implemented Secure RNG for random tools and password generation.</td>
-            </tr>
+            <tr><th>Date</th><th>Module</th><th>Changes</th></tr>
+            <tr><td>2026-03-28</td><td><b>Core</b></td><td>Fixed missing 'Compute' buttons in all modules.</td></tr>
+            <tr><td>2026-03-28</td><td><b>UI</b></td><td>Removed all version tags for a cleaner 'Pro' look.</td></tr>
+            <tr><td>2026-03-27</td><td><b>Math</b></td><td>Enhanced expression support for Number Theory.</td></tr>
         </table>
         """, unsafe_allow_html=True)
 
-    def ui_generic(self, name, placeholder, callback):
-        st.subheader(name)
-        inp = st.text_input("Input:", placeholder=placeholder, key=name)
-        if st.button(f"Compute {name}"):
-            callback(inp)
-
-    # --- LOGIC MODULES ---
-    def logic_calc(self, v): 
+    def logic_calc(self, v):
         try: self.show_res(f"Result: {simplify(self.clean_input(v))}")
-        except: self.show_res("Error: Invalid Expression")
+        except: self.show_res("Invalid Expression.")
 
-    def logic_square(self, v): 
+    def logic_square(self, v):
         try:
-            val = simplify(self.clean_input(v))
-            n = int(val)
+            n = int(simplify(self.clean_input(v)))
             res = n >= 0 and math.isqrt(n)**2 == n
-            self.show_res(f"Value: {n}<br><b>Is Perfect Square: {res}</b>")
-        except: self.show_res("Error: Result is not an integer.")
+            self.show_res(f"Value: {n}<br>Perfect Square: {res}")
+        except: self.show_res("Error processing integer.")
 
-    def logic_prime(self, v): 
+    def logic_prime(self, v):
         try:
-            val = simplify(self.clean_input(v))
-            n = int(val)
-            self.show_res(f"Value: {n}<br><b>Is Prime: {isprime(n)}</b>")
-        except: self.show_res("Error processing number.")
+            n = int(simplify(self.clean_input(v)))
+            self.show_res(f"Value: {n}<br>Is Prime: {isprime(n)}")
+        except: self.show_res("Error.")
 
     def logic_p_factors(self, v):
         try:
-            num = int(simplify(self.clean_input(v)))
-            factors_dict = ntheory.factorint(num)
-            res_str = " * ".join([f"{p}^{exp}" if exp > 1 else str(p) for p, exp in sorted(factors_dict.items())])
-            self.show_res(f"<b>{num} = {res_str}</b>")
-        except: self.show_res("Invalid Input.")
+            n = int(simplify(self.clean_input(v)))
+            f = ntheory.factorint(n)
+            res = " * ".join([f"{p}^{e}" if e>1 else str(p) for p,e in f.items()])
+            self.show_res(f"{n} = {res}")
+        except: self.show_res("Error.")
 
-    def router(self, v):
-        if v.startswith('---'): return
-        if v == 'Home': self.ui_home()
-        elif v == 'Update Log': self.ui_update_log()
-        elif v == 'Tutorial': self.ui_manual()
-        elif v == 'System Health': self.ui_health()
-        elif v == 'Pro Calculator': self.ui_generic("Calculator", "5 + 2^3", self.logic_calc)
-        elif v == 'Check Square Number': self.ui_generic("Square Check", "2^50 + 1", self.logic_square)
-        elif v == 'Check Prime Number': self.ui_generic("Prime Check", "97", self.logic_prime)
-        elif v == 'Prime Factorization': self.ui_generic("Prime Factorization", "2^10", self.logic_p_factors)
-        elif v == 'Random List Picker': self.ui_generic("List Picker", "Item1, Item2, Item3", self.logic_picker)
-        # (Các chức năng khác gọi tương tự logic_calc hoặc logic chuyên biệt)
-        else:
-            st.warning(f"Module '{v}' is active. Enter data to compute.")
-            self.ui_generic(v, "...", self.logic_calc)
+    def logic_divisors(self, v):
+        try: self.show_res(f"Divisors: {ntheory.divisors(int(simplify(self.clean_input(v))))}")
+        except: self.show_res("Error.")
 
-    def ui_manual(self): 
-        st.markdown("<h3>Quick Start Guide</h3>", unsafe_allow_html=True)
-        st.table({"Operation": ["Exponents", "Multiplication", "Division"], "Symbol": ["^ or **", "*", "/"], "Example": ["2^3", "5*x", "10/2"]})
+    def logic_solve(self, v):
+        try: self.show_res(f"Roots: {solve(self.clean_input(v), x)}")
+        except: self.show_res("Could not solve.")
 
-    def ui_health(self): 
-        st.success("System Status: All cores operational. Symbolic engine connected.")
+    def logic_expand(self, v):
+        try: self.show_res(f"Result: {expand(self.clean_input(v))}")
+        except: self.show_res("Error.")
+
+    def logic_factor(self, v):
+        try: self.show_res(f"Result: {factor(self.clean_input(v))}")
+        except: self.show_res("Error.")
+
+    def logic_der(self, v):
+        try: self.show_res(f"d/dx: {diff(self.clean_input(v), x)}")
+        except: self.show_res("Error.")
+
+    def logic_int(self, v):
+        try: self.show_res(f"∫dx: {integrate(self.clean_input(v), x)} + C")
+        except: self.show_res("Error.")
+
+    def ui_limit_ui(self):
+        st.subheader("Limits")
+        e = st.text_input("f(x):", "sin(x)/x")
+        c = st.text_input("x ->:", "0")
+        if st.button("Compute Limit"):
+            try: self.show_res(f"Limit: {limit(self.clean_input(e), x, c)}")
+            except: self.show_res("Error.")
+
+    def ui_gcd_lcm(self):
+        st.subheader("GCD & LCM")
+        n1 = st.number_input("N1:", value=1)
+        n2 = st.number_input("N2:", value=1)
+        if st.button("Compute"):
+            self.show_res(f"GCD: {gcd(int(n1), int(n2))}<br>LCM: {lcm(int(n1), int(n2))}")
+
+    def logic_pass(self, v):
+        try:
+            res = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(int(v)))
+            self.show_res(f"Password: <code>{res}</code>")
+        except: self.show_res("Invalid length.")
 
     def logic_picker(self, v):
         try: self.show_res(f"Picked: {random.choice([i.strip() for i in v.split(',')])}")
-        except: self.show_res("List is empty.")
+        except: self.show_res("Empty list.")
+
+    def ui_color_tool(self):
+        st.subheader("Color Gen")
+        if st.button("Generate HEX"):
+            c = "#%06x" % random.randint(0, 0xFFFFFF)
+            self.show_res(f"HEX: <span style='color:{c}'>{c}</span>")
+
+    def ui_dice_tool(self):
+        st.subheader("Dice")
+        t = st.selectbox("Type:", ["d6", "d20"])
+        if st.button("Roll"):
+            self.show_res(f"Result: {random.randint(1, 6 if t=='d6' else 20)}")
+
+    def ui_rng_tool(self):
+        st.subheader("RNG")
+        mi = st.number_input("Min:", value=1)
+        ma = st.number_input("Max:", value=100)
+        if st.button("Generate"):
+            self.show_res(f"Result: {random.randint(int(mi), int(ma))}")
+
+    def ui_tutorial(self):
+        st.subheader("Tutorial")
+        st.write("Use standard math syntax: ^ for power, * for multiplication.")
+
+    def ui_health(self):
+        st.success("System Healthy. All modules loaded.")
 
 # Launch
 ApexTools()
